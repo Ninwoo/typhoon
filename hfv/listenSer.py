@@ -1,13 +1,13 @@
 '''
 **************************************************
-*               智能体监听模块                    *
+*               智能体监听模块                   *
 *                                                *
-*            1. 监听智能体控制器设置请求          *
-*            2. 循环处理任务队列中的任务          *
-*            3. 接收请求并执行                    *
+*            1. 监听智能体控制器设置请求         *
+*            2. 循环处理任务队列中的任务         *
+*            3. 接收请求并执行                   *
 *                                                *
 *            author: joliu<joliu@s-an.org>       *
-*            date:   2018-3                      *
+*            date:   2018-3-21                   *
 **************************************************
 '''
 
@@ -59,7 +59,7 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                 if not command in controlMethodList:
                     print("error: illegal command")
                     errorFlag = True
-                    (status, output) = (-1, "illegal controller command")
+                    (status, output) = (-1, "illegal controller command: %s" % command)
                 else:
                     # 匹配控制指令做出相应操作
                     (status, output) = executeCommand(command, message[2:])
