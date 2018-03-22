@@ -156,8 +156,9 @@ def executeCommand(command, information):
         # 清空任务队列
         (status, output) = clearDB()
     elif command == "period":
+        ctime = information[0]
         # 设置查询循环周期
-        (status, output) = setPeriod(cTime)
+        (status, output) = updatePeriod(ctime)
     elif command == "show":
         (status, output) = showDB()
         print(output)
@@ -181,7 +182,22 @@ def createDB():
 
 # 设置时间周期
 def updatePeriod(cTime):
-    return (1, "tiem")
+    try:
+        sql = 'update task set ctime=' + str(cTime)
+        conn = sqlite3.connect("task.db")
+        cursor = conn.cursor()
+        cursor.execute(sql)
+        conn.commit()
+        (status, output) = (1, cTime)
+    except sqlite3.Error as err_msg:
+        print("Database error: %s", err_msg)
+        (status, output) = (-1, err_msg)
+    except Exception as err_msg:
+        (status, output) = (-1, err_msg)
+    finally:
+        cursor.close()
+        conn.close()
+        return (status, output)
 
 
 # 插入任务到数据库
