@@ -70,15 +70,20 @@ def mainWhileProcess(input_ctime):
     
         (condition, command) = task.split(';')
         (ip, port, method) = command.split(':')
+
+        # 构建控制指令
+        method = 'device&' + method
         # 读取传感器数值
         (status, output) = sendCommandToDevice(method)
+        # 针对dht11的数据格式做一个简单的数据预处理
+        output = output.split('&')[0]
         if status == -1:
             print("get device data failed! ip: %s, method: %s" % (ip, method))
             continue
 
         if compare(condition[0], float(output), float(condition[1:])):
             # 当结果为真，向目标传感器发出指令
-            (status, output) = sendBySocket(ip, port, method)
+            (status, output) = sendBySocket(ip, int(port), method)
             print(output)
         else:
             pass

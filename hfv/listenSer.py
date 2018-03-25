@@ -128,12 +128,6 @@ def sendBySocket(ip, port, cmd):
         print("Error receiving data: %s" % err_msg)
         s.close()
         return (-1, err_msg)
-    try:
-        response = s.recv(1024).decode()
-    except socket.error as err_msg:
-        print("Error receiving data: %s" % err_msg)
-        s.close()
-        return (-1, err_msg)
 
     print(str(response))
     s.close()
