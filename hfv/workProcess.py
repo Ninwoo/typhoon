@@ -25,7 +25,7 @@ def findTask():
         conn = sqlite3.connect("task.db")
         cursor = conn.cursor()
         cursor.execute(sql)
-        data = cursor.fetchone()
+        data = cursor.fetchall()
         if data is None:
             (status, output) = (-1, 'database is empty!')
         else:
