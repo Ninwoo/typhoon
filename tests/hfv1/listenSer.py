@@ -94,7 +94,7 @@ class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
 # 发送控制指令到Device
 def sendCommandToDevice(cmd):
     # 通过容器的环境变量HOST获取绑定传感器的IP地址
-    ip, port = os.getenv('HOST'), 8085
+    ip, port = "192.168.12.42", 8085
     return sendBySocket(ip, port, cmd)
 
 
@@ -266,7 +266,7 @@ if __name__ == "__main__":
     createDB()
     
     # 设置host和port
-    HOST, PORT = "0.0.0.0", 3000
+    HOST, PORT = "0.0.0.0", 30001
     logger = logging.getLogger("TCPServer")
     logger.setLevel(logging.INFO)
 

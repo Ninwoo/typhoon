@@ -72,6 +72,9 @@ def mainWhileProcess(input_ctime):
         (ip, port, method) = command.split(':')
         # 读取传感器数值
         (status, output) = sendCommandToDevice(method)
+        # 千杀的dht11，需要处理下数据
+        output = output.split('&')[0]
+        print(output)
         if status == -1:
             print("get device data failed! ip: %s, method: %s" % (ip, method))
             continue
