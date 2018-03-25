@@ -50,3 +50,28 @@
 控制器：
 
 1. 任务队列的异常发现与处理功能
+
+### 使用说明
+
+|传感器名称| 映射端口 |
+|——————————|----------|
+|dht102|33333|
+|switch104|33334|
+|switch103|33335|
+
+程序范例:
+
+当温度大于30时，启动switch104,10s后启动switch103
+
+```
+python3 testListenSer.py 33333 "controller&add&<30;192.168.12.19:33334:on&10"
+python3 testListenSer.py 33333 "controller&add&<30;192.168.12.19:33335:on&0"
+```
+
+清空任务队列
+
+```
+python3 testListenSer.py 33333 "controller&clear"
+```
+
+
