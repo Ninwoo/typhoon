@@ -161,7 +161,7 @@ def executeCommand(command, information):
         print(tasklist)
         print(ctime)
         # (status, output) = insertDB(task, ctime)
-        print(output)
+        # print(output)
 
     elif command == "clear":
         # 清空任务队列
@@ -171,7 +171,8 @@ def executeCommand(command, information):
         # 设置查询循环周期
         (status, output) = updatePeriod(ctime)
     elif command == "show":
-        (status, output) = showDB()
+        print("kind:" + information[0])
+        (status, output) = showDB(information[0])
         print(output)
     else:
         # 可能由于更新可执行任务列表，而未实现功能导致的问题
@@ -182,14 +183,45 @@ def executeCommand(command, information):
 
 # 插入输入数据库
 def insertInputDB(inputTask, ctime, taskid):
-    print("hello input")
-    return (1, "hello")
+    sql = "insert into inputtask values ('" + inputTask + "','" + taskid + "'," + ctime + ")"
+    try:
+        conn = sqlite3.connect("task.db")
+        cursor = conn.cursor()
+        cursor.execute(sql)
+        conn.commit()
+        (status, output) = (1, taskid)
+    except sqlite3.Error as err_msg:
+        print("Database error：%s", err_msg)
+        (status, output) = (-1, err_msg)
+    except Exception as err_msg:
+        (status, output) = (-1, err_msg)
+    finally:
+        cursor.close()
+        conn.close()
+        return (status, output)
 
 
 # 插入输出数据库
 def insertOutputDB(outputTask, taskid):
-    print("hello output")
-    return (1, "hello")
+    countNumber = outputTask.split(':')[2]
+    lists =  outputTask.split(':')
+    outputTask = lists[0] + ':' + lists[1]
+    sql = "insert into outputtask values('" + taskid + "','" +outputTask + "'," + countNumber + ")"
+    try:
+        conn = sqlite3.connect("task.db")
+        cursor = conn.cursor()
+        cursor.execute(sql)
+        conn.commit()
+        (status, output) = (1, taskid)
+    except sqlite3.Error as err_msg:
+        print("Database error：%s", err_msg)
+        (status, output) = (-1, err_msg)
+    except Exception as err_msg:
+        (status, output) = (-1, err_msg)
+    finally:
+        cursor.close()
+        conn.close()
+        return (status, output)
 
 
 # 创建输入输出数据表
@@ -264,11 +296,16 @@ def insertDB(task, ctime):
 # 清空数据库
 def clearDB():
     try:
+        # 变更为清除多个队列
         conn = sqlite3.connect("task.db")
         cursor = conn.cursor()
         cursor.execute("delete from task")
         conn.commit()
-        (status, output) = (-1, "delete success")
+        cursor.execute("delete from inputtask")
+        conn.commit()
+        cursor.execute("delete from outputtask")
+        conn.commit()
+        (status, output) = (1, "delete success")
     except sqlite3.Error as err_msg:
         print("Database error: %s", err_msg)
         (status, output) = (-1, err_msg)
@@ -281,11 +318,17 @@ def clearDB():
 
 
 # 展示数据库内容
-def showDB():
+def showDB(kind):
+    if kind == '0':
+        tableName = 'inputtask'
+    else:
+        tableName = 'outputtask'
     try:
         conn = sqlite3.connect("task.db")
         cursor = conn.cursor()
-        cursor.execute("select * from task")
+
+        #cursor.execute("select * from task")
+        cursor.execute("select * from " + tableName)
         data = cursor.fetchall()
         if data is None:
             (status, output) = (1, 0)
