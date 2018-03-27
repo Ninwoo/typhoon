@@ -135,16 +135,32 @@ def sendBySocket(ip, port, cmd):
     return (1, str(response))
 
 
+# 根据时间获取唯一标识
+def getTaskID():
+    data_time = time.time()
+    (str1, str2) = str(data_time).split('.')
+    taskid = str1[5:] + str2[:3]
+    return taskid
+
+
 # 执行控制指令
 def executeCommand(command, information):
     if command == "add":
         # 目前假设information就是全部控制指令
-        task = information[0]
+        tasklist = information[0].split(';')
+        inputTask = tasklist[0]
         ctime = information[1]
+        # 根据时间获取任务id
+        taskid = getTaskID()
+        # 插入input任务队列
+        (status, output) = insertInputDB(inputTask, ctime, taskid)
+        outputTask = tasklist[1]
+        # 插入Output任务队列
+        (status, output) = insertOutputDB(outputTask, taskid)
         print("****************")
-        print(task)
+        print(tasklist)
         print(ctime)
-        (status, output) = insertDB(task, ctime)
+        # (status, output) = insertDB(task, ctime)
         print(output)
 
     elif command == "clear":
@@ -162,6 +178,35 @@ def executeCommand(command, information):
         (status, output) = (-1, "method isn't ready")
 
     return (status, output)
+
+
+# 插入输入数据库
+def insertInputDB(inputTask, ctime, taskid):
+    print("hello input")
+    return (1, "hello")
+
+
+# 插入输出数据库
+def insertOutputDB(outputTask, taskid):
+    print("hello output")
+    return (1, "hello")
+
+
+# 创建输入输出数据表
+def createInputOutputDB():
+    conn = sqlite3.connect("task.db")
+    cursor = conn.cursor()
+    cursor.execute("""CREATE TABLE if not exists inputtask
+                      (cmd text, outputid text, ctime int(5))
+                   """)
+    conn.commit()
+    cursor.execute("""CREATE TABLE if not exists outputtask
+                      (id text, cmd text, countnumber int(5))
+                   """)
+    conn.commit()
+    cursor.close()
+    conn.close()
+
 
 # 创建数据库
 def createDB():
@@ -257,6 +302,7 @@ def showDB():
 
 
 if __name__ == "__main__":
+    createInputOutputDB()
     createDB()
     
     # 设置host和port
