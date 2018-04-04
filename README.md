@@ -41,9 +41,10 @@
 ### 目前智能体支持的控制命令
 |控制命令|说明|范例|
 |--------|----|----|
-|add|添加一条任务|controller&add&>30;192.168.1.1:3000:off&20|
+|add|添加一条任务|controller&add&>30;192.168.1.1:3000:off:2&20|
 |clear|清空任务队列|controller&clear|
 |period|更新任务执行周期|controller&period&20|
+|show|查看任务队列中项目|controller&show&0|
 
 注： 控制器命令目前由`./tests/testListenSer.py`代为执行
  
@@ -70,8 +71,8 @@
 当温度大于30时，启动switch104,10s后启动switch103
 
 ```
-python3 testListenSer.py 33333 "controller&add&<30;192.168.12.19:33334:on&10"
-python3 testListenSer.py 33333 "controller&add&<30;192.168.12.19:33335:on&0"
+python3 testListenSer.py 33333 "controller&add&>30;192.168.12.19.3000:on:2&20"
+python3 testListenSer.py 33333 "controller&add&<30;192.168.12.19:33335:on:2&0"
 ```
 
 清空任务队列
