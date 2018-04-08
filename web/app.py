@@ -18,6 +18,7 @@ from flask import request
 from flask_cors import *
 
 import json
+import socket
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
@@ -26,8 +27,8 @@ CORS(app, supports_credentials=True)
 def hello():
     return 'hello'
 
-@app.route('/controller/test/', methods=['POST'])
-def test():
+@app.route('/controller/run/', methods=['POST'])
+def run():
     nodeList = []
     for i in range(10):
         try:
@@ -37,7 +38,8 @@ def test():
             print("load data success")
             break
     headNode = getHeadNode(nodeList)
-    msgTransPath = getMsgTransPath(headNode)
+    msgTransPath = getMsgTransPath(headNode, nodeList)
+    makeCtrlMsg(nodeList, msgTransPath)
     return 'success'   
 
 
@@ -49,23 +51,95 @@ def getHeadNode(nodeList):
         if nodeDict["last"] == 'undefined':
             headNode = nodeDict
             return headNode
+    return None
 
-def findNodeById(nodeList):
+def findNodeById(nodeList, nodeId):
     # 通过字典查找对应id的node节点
-    
+    for nodeData in nodeList:
+        nodeDict = json.loads(nodeData)
+        if nodeDict['id'] == nodeId:
+            return nodeDict
+
+    return None
+
+
+@app.route('/controller/clear')
+def clear():
+    nodePortList = getAllNodePort()
+    for port in nodePortList:
+        msg = "controller&clear"
+        print(sendToController(port, msg))
+    return 'success'
+
+def getAllNodePort():
+    # 获取全部节点端口号
+    return [33333, 33334, 33335]
+def findNextNodeById(nodeList, nodeId):
+    # 通过字典查找对应id的node节点
+    for nodeData in nodeList:
+        nodeDict = json.loads(nodeData)
+        if nodeDict['id'] == nodeId:
+            return nodeDict['next']
+
+    return None
+
+
+def findThreholdById(nodeList, nodeid):
+    # 通过节点id查找对应的阈值   
+    for nodeData in nodeList:
+        nodeDict = json.loads(nodeData)
+        return nodeDict['threhold']
+    return None
+             
 def getMsgTransPath(headNode, nodeList):
     # 通过头节点返回信息传输路径
     msgTransPath = []
-    msgTransPath.append(headNode['id'])
-    nextNode = headNode['next']
+    while True:
+        if headNode['id'][:8] == "switcher":
+            headNode = findNodeById(nodeList, headNode['next'])
+            continue
+        msgTransPath.append(headNode['id'])
+        nextNode = headNode['next']
+        if nextNode == 'undefined':
+            break
+        headNode = findNodeById(nodeList, nextNode)
+    return msgTransPath
+        
 
 def makeCtrlMsg(nodeList, msgTransPath):
     # 通过消息传递数组生存控制指令，并配置到各个agent节点
+    msgTransPathLen = len(msgTransPath)
+    for i in range(msgTransPathLen - 1):
+        nodeId = msgTransPath[i]
+        nodePort = findNodePort(nodeId)
+        print(nodePort)
+        nextNodeId = msgTransPath[i + 1]
+        threhold = findThreholdById(nodeList, nodeId)
+        if threhold == 'undefined':
+            continue
+        else:
+            (threhold, method) = threhold.split(';')
+        nextNodePort = findNodePort(nextNodeId)
+        ipAddr = '192.168.12.19:' + str(nextNodePort)
+        ctrlMsg = "controller&add&" + threhold + ';' + ipAddr + ':' + method + '&20'
+        print "send to %d" % nodePort
+        print ctrlMsg
+        print sendToController(nodePort, ctrlMsg) 
+
+def findNodePort(nodeId):
+    # 通过nodeid查找到虚拟化模块的端口号
+    portDict = {'switch103': 33333, 'dht102': 33334, 'switch104': 33335}
+    return portDict[nodeId]
+    
+def sendToController(port, msg):
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect(("192.168.12.19", port))
+    s.sendall(msg.encode())
+    response = s.recv(1024).decode()
+    return response
         
 
 
 if __name__ == "__main__":
     app.run(threaded=True, debug=True, host='0.0.0.0', port=36666)
-
-
 
