@@ -50,7 +50,7 @@
 ### 目前智能体支持的控制命令
 |控制命令|说明|范例|
 |--------|----|----|
-|add|添加一条任务|controller&add&>30;192.168.1.1:3000:off:2&20|
+|add|添加一条任务|controller&add&>30;192.168.1.1:3000::2:off&20|
 |clear|清空任务队列|controller&clear|
 |period|更新任务执行周期|controller&period&20|
 |show|查看任务队列中项目|controller&show&0|
