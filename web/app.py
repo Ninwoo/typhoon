@@ -27,6 +27,25 @@ CORS(app, supports_credentials=True)
 def hello():
     return 'hello'
 
+@app.route('/controller/run/<msg>', methods=['GET'])
+def run(msg):
+    msg = msg.replace("'", '"')
+    print msg
+    nodeDataDict = json.loads(msg)
+    nodeList = []
+    for i in range(10):
+        try:
+            nodeData = nodeDataDict[str(i)]
+            nodeList.append(nodeData)
+        except Exception as err_msg:
+            print("load data success")
+            break
+    headNode = getHeadNode(nodeList)
+    msgTransPath = getMsgTransPath(headNode, nodeList)
+    makeCtrlMsg(nodeList, msgTransPath)
+ 
+    return msg
+'''
 @app.route('/controller/run/', methods=['POST'])
 def run():
     nodeList = []
@@ -37,11 +56,12 @@ def run():
         except Exception as err_msg:
             print("load data success")
             break
-    headNode = getHeadNode(nodeList)
-    msgTransPath = getMsgTransPath(headNode, nodeList)
-    makeCtrlMsg(nodeList, msgTransPath)
+    print nodeList
+    #headNode = getHeadNode(nodeList)
+    #msgTransPath = getMsgTransPath(headNode, nodeList)
+    #makeCtrlMsg(nodeList, msgTransPath)
     return 'success'   
-
+'''
 
 def getHeadNode(nodeList):
     # 处理节点数据，获取数据链路
