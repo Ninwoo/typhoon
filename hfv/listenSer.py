@@ -154,12 +154,12 @@ def executeCommand(command, information):
         taskid = getTaskID()
         # 插入input任务队列
         (status, output) = insertInputDB(inputTask, ctime, taskid)
+        print(output)
         outputTask = tasklist[1]
         # 插入Output任务队列
         (status, output) = insertOutputDB(outputTask, taskid)
         print("****************")
-        print(tasklist)
-        print(ctime)
+        print(output)
         # (status, output) = insertDB(task, ctime)
         # print(output)
 
@@ -203,10 +203,13 @@ def insertInputDB(inputTask, ctime, taskid):
 
 # 插入输出数据库
 def insertOutputDB(outputTask, taskid):
+    print("**" + outputTask)
     countNumber = outputTask.split(':')[2]
     lists =  outputTask.split(':')
-    outputTask = lists[0] + ':' + lists[1]
+    outputTask = lists[0] + ':' + lists[1] + ':' + lists[3]
+    print(outputTask)
     sql = "insert into outputtask values('" + taskid + "','" +outputTask + "'," + countNumber + ")"
+    print(sql)
     try:
         conn = sqlite3.connect("task.db")
         cursor = conn.cursor()
