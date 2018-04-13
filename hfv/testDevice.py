@@ -20,7 +20,7 @@ def sdnToDatabase(sql):
     # 发送sql命令到数据库
     cmd = sql.split(' ')[0]
     try:
-        conn = pymysql.connect(host='127.0.0.1', port=12306, user='root', passwd='Vudo3423', db='HiDockerwifi', charset='utf8')
+        conn = pymysql.connect(host='test-mysql', port=3306, user='root', passwd='Vudo3423', db='HiDockerwifi', charset='utf8')
         cursor = conn.cursor()
         cursor.execute(sql)
         if cmd == 'select':
@@ -68,7 +68,7 @@ def updateDeviceInfo(ipaddress, equipid, device_status, delay):
                   device_status, delay)
         else:
             sql = "update deviceinfo set status=%d,delay='%s' where ipaddress='%s'" % \
-                  (1, delay, ipaddress)
+                  (device_status, delay, ipaddress)
             
         (status, output) = sdnToDatabase(sql)
         if not status:
@@ -81,20 +81,23 @@ def updateDeviceInfo(ipaddress, equipid, device_status, delay):
 
 def pingTestHost(ip):
     # 使用ping检测host设备的网络通信情况
-    cmd = 'ping -c 1 -w 1 ' + ip
+    cmd = 'ping -c 4 -w 4 ' + ip
     equipid = getDeviceIDByIP(ip)
     if not equipid:
         return False
     # 执行ping命令
+    device_status = 0
     (status, output) = subprocess.getstatusoutput(cmd)
     if status == 0:
         # 如果检测设备正常，获取单次检测的时延
-        delayTime = output.split('\n')[1].split(' ')[-2].split('=')[1]
-        status = 1
+        # delayTime = output.split('\n')[1].split(' ')[-2].split('=')[1]
+        delayTime = output.split('\n')[-1].split(' ')[-2]
+        print(delayTime)
+        device_status = 1
     else:
         delayTime = '-'
-        status = 0
-    return updateDeviceInfo(ip, equipid, status, delayTime)
+        device_status = 0
+    return updateDeviceInfo(ip, equipid, device_status, delayTime)
 
 if __name__ == "__main__":
     host = os.getenv('HOST')
