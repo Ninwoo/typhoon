@@ -174,6 +174,37 @@ def createDB():
     cursor.close()
     conn.close()
 
+# 创建输出数据库
+def createOutputDB():
+    conn = sqlite3.connect("task.db")
+    cursor = conn.cursor()
+    cursor.execute("""CREATE TABLE `resulovetable` (
+                     `id` integer primary key autoincrement,
+                     `taskmatrix` text NOT NULL,
+                     `inputtype` text NOT NULL,
+                     `status` tinyint DEFAULT 0,
+                     `devicelist` text NOT NULL)
+                   """)
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+
+# 创建数据缓存数据库
+def createDataCach():
+    conn = sqlite3.connect("task.db")
+    cursor = conn.cursor()
+    cursor.execute("""CREATE TABLE `datacach` (
+                      `id` integer primary key autoincrement,
+                      `deviceid` varchar(30) NOT NULL,
+                      `data` varchar(15) default '-',
+                      `updatetime` varchar(30) NOT NULL,
+                      `groupid` integer NOT NULL)
+                   """)
+    conn.commit()
+    cursor.close()
+    conn.close()
+
 
 # 设置时间周期
 def updatePeriod(cTime):
@@ -257,8 +288,9 @@ def showDB():
 
 
 if __name__ == "__main__":
+    createOutputDB()
     createDB()
-    
+    createDataCach()
     # 设置host和port
     HOST, PORT = "0.0.0.0", 3000
     logger = logging.getLogger("TCPServer")
@@ -287,4 +319,3 @@ if __name__ == "__main__":
 
     # 使用control + C 退出程序
     server.serve_forever()
-
