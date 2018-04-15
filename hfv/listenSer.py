@@ -178,12 +178,13 @@ def createDB():
 def createOutputDB():
     conn = sqlite3.connect("task.db")
     cursor = conn.cursor()
-    cursor.execute("""CREATE TABLE `resulovetable` (
+    cursor.execute("""CREATE TABLE if not exist `resulovetable` (
                      `id` integer primary key autoincrement,
                      `taskmatrix` text NOT NULL,
                      `inputtype` text NOT NULL,
                      `status` tinyint DEFAULT 0,
-                     `devicelist` text NOT NULL)
+                     `devicelist` text NOT NULL,
+                     `ctime` tinyint DEFAULT 2)
                    """)
     conn.commit()
     cursor.close()
@@ -194,10 +195,10 @@ def createOutputDB():
 def createDataCach():
     conn = sqlite3.connect("task.db")
     cursor = conn.cursor()
-    cursor.execute("""CREATE TABLE `datacach` (
+    cursor.execute("""CREATE TABLE if not exist `datacach` (
                       `id` integer primary key autoincrement,
                       `deviceid` varchar(30) NOT NULL,
-                      `data` varchar(15) default '-',
+                      `data` integer default -1,
                       `updatetime` varchar(30) NOT NULL,
                       `groupid` integer NOT NULL)
                    """)
