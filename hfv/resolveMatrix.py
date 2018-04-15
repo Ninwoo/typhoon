@@ -16,41 +16,45 @@ from controllMatrix import *
 
 inputDeviceData = np.array([])
 
-def resolveMatrix(inputTask, inputTypeList, outputNode, input):
+def resolveMatrix(inputTask, inputTypeList, outputNode):
     '''
     根据矩阵构建输入输出关系
     inputTask: 输入矩阵;inputTypeList: 节点类型列表，指明各个节点的具体功能;outputNode: 输出节点;
     inputDeviceData: 输入设备节点状态值
+    更改获取实时的传感器数据
     '''
     nodeType = inputTypeList[outputNode]
     lastNode = np.where((inputTask.T[outputNode] == 1))[0]
     if nodeType == 0:
-        output = resolveMatrix(inputTask, inputTypeList, lastNode[0], input)
+        output = resolveMatrix(inputTask, inputTypeList, lastNode[0])
     elif nodeType == 1:
-        a = resolveMatrix(inputTask, inputTypeList, lastNode[0], input)
-        b = resolveMatrix(inputTask, inputTypeList, lastNode[1], input)
+        a = resolveMatrix(inputTask, inputTypeList, lastNode[0])
+        b = resolveMatrix(inputTask, inputTypeList, lastNode[1])
         output =  a & b
     elif nodeType == 2:
-        a = resolveMatrix(inputTask, inputTypeList, lastNode[0], input)
-        b = resolveMatrix(inputTask, inputTypeList, lastNode[1], input)
+        a = resolveMatrix(inputTask, inputTypeList, lastNode[0])
+        b = resolveMatrix(inputTask, inputTypeList, lastNode[1])
         output = a | b
     elif nodeType == 3:
-        a = resolveMatrix(inputTask, inputTypeList, lastNode[0], input)
+        a = resolveMatrix(inputTask, inputTypeList, lastNode[0])
         output = not a
+    elif nodeType == 5:
+        # 延时器
+        sleepTime = getValueByNodeID(outputNode)[1]
+        output = resolveMatrix(inputTask, inputTypeList, lastNode[0])
+        time.sleep(sleepTime)
     elif nodeType == 4:
-        output = input[outputNode]
+        print(outputNode)
+        output = getValueByNodeID(outputNode)[1]
+        print(output)
     return output
 
 
-def checkMatrix(inputTask, inputTypeList, input):    
+def checkMatrix(inputTask, inputTypeList):    
     # 测试矩阵是否符合要求
-    input = np.array(input)
     length = inputTask.shape[0]
     zeroList = np.zeros(length)
     outputNode = np.where((inputTask == zeroList).all(1))[0]
-    if input.shape[0] != length:
-        print("输入节点数据异常 %d: %d" % (length, inputDeviceData.shape[0]), input)
-        return False
     if outputNode.shape[0] != 1:
         print("输出节点不符合单输出要求")
         return False
@@ -78,15 +82,15 @@ def checkMatrix(inputTask, inputTypeList, input):
     return True
 
 
-def runTask(inputData):
+def runTask():
     # 输入各个节点的状态信息
 
-    (id, inputTask, inputTypeList, status, deviceList) = getTaskFromDB()
+    (id, inputTask, inputTypeList, status, deviceList, ctime) = getTaskFromDB()
 
     inputTask = np.array(json.loads(inputTask))
     inputTypeList = np.array(json.loads(inputTypeList))
     
-    if not checkMatrix(inputTask, inputTypeList, inputData):
+    if not checkMatrix(inputTask, inputTypeList):
         return (-1, '矩阵检查不通过')
 
     # 获取矩阵宽度
@@ -99,10 +103,10 @@ def runTask(inputData):
     inputNodes = np.where((inputTask.T == zeroList).all(1))[0]
 
 
-    return (1, resolveMatrix(inputTask, inputTypeList, outputNode[0], inputData))
+    return (1, resolveMatrix(inputTask, inputTypeList, outputNode[0]))
 
 
 if __name__ == "__main__":
     inputData = [0,0,0,0,0,1,0,1]
-    print(runTask(inputData))
+    print(runTask())
     
