@@ -12,7 +12,32 @@ import numpy as np
 import json
 import time
 
+# ~~~~~~~~~~~~~~~~~~~inputDB操作函数~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# 更新任务执行控制表
+def updateDeviceTask(data, dstIP, ctime):
+    sql = "select * from decidedestination"
+    (status, output) = sendToDB(sql)
+    if status == -1:
+        return (status, output)
+    if output == []:
+        sql = "insert into decidedestination (data,dst,ctime) values \
+                  ('%s','%s',%d)" % (data, dstIP, ctime)
+    else:
+        sql = "update decidedestination set data='%s',dst='%s',ctime=%d" % \
+                  (data, dstIP, ctime)
+    return sendToDB(sql)
 
+
+# 获取任务执行控制表
+def getDeviceTask():
+    sql = "select * from decidedestination"
+    (status, output) = sendToDB(sql)
+    if status == -1:
+        return (status, output)
+    return (status, output[0])
+
+
+# ~~~~~~~~~~~~~~~~~~~dataCach操作函数~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # 更新设备输入数据信息
 def updateDataCach(device, decideValue):
     # 检查是否存在该设备在预接收的列表中，如果不存在则丢弃
@@ -54,7 +79,8 @@ def insertDB(taskMatrix, inputTypeList, deviceList, status, ctime):
     sql = "insert into resulovetable \
                (taskmatrix,inputtype, status, devicelist, ctime) values \
                ('%s','%s',%d,'%s',%d)" % (taskMatrix, inputTypeList, status, deviceList, ctime)
-    print(sendToDB(sql))
+
+    return sendToDB(sql)
 
 
 def sendToDB(sql):
@@ -112,20 +138,22 @@ def getCircleTime():
     return data[5]
 
 
-def showDB():
+def showDB(tableName):
     # 打印数据库内容
-    # sql = "select * from resulovetable"
-    sql = "select * from datacach"
-    print(sendToDB(sql))
+    sql = "select * from %s" % tableName
+
+    return sendToDB(sql)
 
 
 def clearDB():
     # 清空数据库
-    sql = "delete from resulovetable"
-    print(sendToDB(sql))
-    sql = "delete from datacach"
-    print(sendToDB(sql))
-
+    dbNames = ['resulovetable', 'datacach', 'decidedestination']
+    for name in dbNames:
+        sql = "delete from %s" % name
+        (status, output) = sendToDB(sql)
+        if status == -1:
+            break
+    return (status, output)
 
 
 if __name__ == '__main__':
