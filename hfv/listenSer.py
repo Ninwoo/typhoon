@@ -5,9 +5,12 @@
 *            1. 监听智能体控制器设置请求         *
 *            2. 循环处理任务队列中的任务         *
 *            3. 接收请求并执行                   *
+*            4. 添加新的任务类型                 *
+*            5. 拓展输入输出数据库               *
 *                                                *
 *            author: joliu<joliu@s-an.org>       *
 *            date:   2018-3-21                   *
+*            modify: 2018-4-16                   *
 **************************************************
 '''
 
@@ -21,9 +24,12 @@ import subprocess
 import logging
 import sqlite3
 
+
+from controllMatrix import *
+
 # 两种控制模式，controller:控制器写入控制命令，device：接收其他传感器控制命令
 controlModeList = ['controller', 'device']
-controlMethodList = ['add', 'rm', 'clear', 'period', 'show']
+controlMethodList = ['addInput','addOutput', 'rm', 'clear', 'period', 'show']
 
 class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
     '''
@@ -63,7 +69,8 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                 else:
                     # 匹配控制指令做出相应操作
                     (status, output) = executeCommand(command, message[2:])
-                
+                    print(message[2:])
+                    #(status , output) = (1, message[2:])
 
             # 监听来自device hfv模块的控制请求
             elif controlMode == "device":
@@ -137,31 +144,21 @@ def sendBySocket(ip, port, cmd):
 
 # 执行控制指令
 def executeCommand(command, information):
-    if command == "add":
-        # 目前假设information就是全部控制指令
-        task = information[0]
-        ctime = information[1]
-        print("****************")
-        print(task)
-        print(ctime)
-        (status, output) = insertDB(task, ctime)
-        print(output)
-
-    elif command == "clear":
-        # 清空任务队列
-        (status, output) = clearDB()
-    elif command == "period":
-        ctime = information[0]
-        # 设置查询循环周期
-        (status, output) = updatePeriod(ctime)
-    elif command == "show":
-        (status, output) = showDB()
-        print(output)
-    else:
-        # 可能由于更新可执行任务列表，而未实现功能导致的问题
-        (status, output) = (-1, "method isn't ready")
-
-    return (status, output)
+    # comand:input/output, information:将要存入数据库的内容
+    if command == 'addInput':
+        (data, dstIP, circleTime) = information
+        return updateDeviceTask(data, dstIP, int(circleTime))
+    elif command == 'addOutput':
+        clearDB()
+        (taskMatrixJOSN, deviceTypeListJOSN, deviceListJOSN, taskStatus,\
+             circleTime) = information
+        return insertDB(taskMatrixJOSN, deviceTypeListJOSN, deviceListJOSN,\
+                            int(taskStatus), int(circleTime))
+    elif command == 'show':
+        DBName = information[0]
+        return showDatabase(DBName)
+    elif command == 'clear':
+        return clearDB()
 
 # 创建数据库
 def createDB():
@@ -174,11 +171,26 @@ def createDB():
     cursor.close()
     conn.close()
 
+# 创建输入数据库
+def createInputDB():
+    conn = sqlite3.connect("task.db")
+    cursor = conn.cursor()
+    cursor.execute("""CREATE TABLE if not exists `decidedestination` (
+                     `id` integer primary key autoincrement,
+                     `data` tinyint NOT NULL,
+                     `dst` varchar(3) NOT NULL,
+                     `ctime` tinyint DEFAULT 2)
+                   """)
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+
 # 创建输出数据库
 def createOutputDB():
     conn = sqlite3.connect("task.db")
     cursor = conn.cursor()
-    cursor.execute("""CREATE TABLE if not exist `resulovetable` (
+    cursor.execute("""CREATE TABLE if not exists `resulovetable` (
                      `id` integer primary key autoincrement,
                      `taskmatrix` text NOT NULL,
                      `inputtype` text NOT NULL,
@@ -195,7 +207,7 @@ def createOutputDB():
 def createDataCach():
     conn = sqlite3.connect("task.db")
     cursor = conn.cursor()
-    cursor.execute("""CREATE TABLE if not exist `datacach` (
+    cursor.execute("""CREATE TABLE if not exists `datacach` (
                       `id` integer primary key autoincrement,
                       `deviceid` varchar(30) NOT NULL,
                       `data` integer default -1,
@@ -226,69 +238,14 @@ def updatePeriod(cTime):
         conn.close()
         return (status, output)
 
-
-# 插入任务到数据库
-def insertDB(task, ctime):
-    try:
-        hashtext = str(time.time()).split(".")[1]
-        sql = "insert into task values ('" + task + "', '" + hashtext + "', " + ctime + ")" 
-        conn = sqlite3.connect("task.db")
-        cursor = conn.cursor()
-        cursor.execute(sql)
-        conn.commit()
-        (status, output) = (1, hashtext)
-    except sqlite3.Error as err_msg:
-        print("Database error: %s", err_msg)
-        (status, output) = (-1, err_msg)
-    except Exception as err_msg:
-        (status, output) = (-1, err_msg)
-    finally:
-        cursor.close()
-        conn.close()
-        return (status, output)
-
-
-# 清空数据库
-def clearDB():
-    try:
-        conn = sqlite3.connect("task.db")
-        cursor = conn.cursor()
-        cursor.execute("delete from task")
-        conn.commit()
-        (status, output) = (-1, "delete success")
-    except sqlite3.Error as err_msg:
-        print("Database error: %s", err_msg)
-        (status, output) = (-1, err_msg)
-    except Exception.Error as err_msg:
-        (status, output) = (-1, err_msg)
-    finally:
-        cursor.close()
-        conn.close()
-        return (status, output)
-
-
-# 展示数据库内容
-def showDB():
-    try:
-        conn = sqlite3.connect("task.db")
-        cursor = conn.cursor()
-        cursor.execute("select * from task")
-        data = cursor.fetchall()
-        if data is None:
-            (status, output) = (1, 0)
-        else:
-            (status, output) = (1, data)
-    except sqlite3.Error as err_msg:
-        (status, output) = (-1, err_msg)
-    except Exception.Error as err_msg:
-        (status, output) = (-1, err_msg)
-    finally:
-        cursor.close()
-        conn.close()
-        return (status, output)
-
-
+# 返回数据库内容
+def showDatabase(tableName):
+    tableNames = ['resulovetable', 'datacach', 'decidedestination']
+    if not tableName in tableNames:
+        return (-1, "no this table")
+    return showDB(tableName)
 if __name__ == "__main__":
+    createInputDB()
     createOutputDB()
     createDB()
     createDataCach()
