@@ -29,7 +29,7 @@ from controllMatrix import *
 
 # 两种控制模式，controller:控制器写入控制命令，device：接收其他传感器控制命令
 controlModeList = ['controller', 'device']
-controlMethodList = ['addInput','addOutput', 'rm', 'clear', 'period', 'show']
+controlMethodList = ['addInput','addOutput', 'rm', 'clear', 'period', 'show', 'start', 'stop']
 
 class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
     '''
@@ -70,18 +70,20 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                     # 匹配控制指令做出相应操作
                     (status, output) = executeCommand(command, message[2:])
                     print(message[2:])
-                    #(status , output) = (1, message[2:])
 
             # 监听来自device hfv模块的控制请求
             elif controlMode == "device":
-                command = message[1]
+                deviceID = message[1]
+                data = message[2]
                 # 发送控制请求
-                (status, output) = sendCommandToDevice(command)
-                # (status, output) = (1, "test")
+                # (status, output) = sendCommandToDevice(command)
+                (status, output) = updateDataCach(deviceID, int(data))
+                print(deviceID, data)
+                #(status, output) = (1, "test")
             else:
                 pass
         else:
-            print("illegal controlMode")
+            print("illegal controlMode!")
             (status, output) = (-1, 'illegal controlMode')
             errorFlag = True
 
@@ -154,11 +156,24 @@ def executeCommand(command, information):
              circleTime) = information
         return insertDB(taskMatrixJOSN, deviceTypeListJOSN, deviceListJOSN,\
                             int(taskStatus), int(circleTime))
+    elif command == 'addCach':
+        data = information[0]
+        data = json.loads(data)
+        for i in range(len(data[0])):
+            (status, output) = insertDataIntoDataCach(data[0][i])
+            (status, output) = updateDataCach(data[0][i], data[1][i])
+        return (status, output)
+        
     elif command == 'show':
         DBName = information[0]
         return showDatabase(DBName)
     elif command == 'clear':
         return clearDB()
+    elif command == 'start':
+        return updateTaskStatus(1)
+    elif command == 'stop':
+        return updateTaskStatus(0)
+
 
 # 创建数据库
 def createDB():

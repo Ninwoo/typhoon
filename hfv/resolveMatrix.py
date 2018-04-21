@@ -50,7 +50,36 @@ def resolveMatrix(inputTask, inputTypeList, outputNode):
     return output
 
 
-def checkMatrix(inputTask, inputTypeList):    
+def checkMatrix(inputTask, inputTypeList): 
+    # 验证数据数据库数据是否否和规定
+    (status, output) = getDeviceListFromDB()
+    if status == -1:
+        print(output)
+        return False
+    (getTaskStatusStatus, taskStatus) = getTaskStatus()
+    if getTaskStatusStatus == -1:
+        print(taskStatus)
+    if taskStatus == 0:
+        print("Task has been stopped!")
+        return False
+    
+    deviceList = json.loads(output)
+    for device in deviceList:
+        if device == -1:
+            continue
+        if device[:5] == 'delay':
+            continue
+        if device[:6] == 'switch':
+            # 临时解决方案，把switch都作为输出屏蔽掉
+            continue
+        (runStatus, deviceStatus) = existDevice(device)
+        if runStatus == -1:
+            print(deviceStatus)
+            return False
+        if not deviceStatus:
+            print("need to set datacach database")
+            return False
+        
     # 测试矩阵是否符合要求
     length = inputTask.shape[0]
     zeroList = np.zeros(length)
@@ -84,8 +113,10 @@ def checkMatrix(inputTask, inputTypeList):
 
 def runTask():
     # 输入各个节点的状态信息
-
-    (id, inputTask, inputTypeList, status, deviceList, ctime) = getTaskFromDB()
+    data = getTaskFromDB()
+    if data == []:
+        return (-1, 'No Task')
+    (id, inputTask, inputTypeList, status, deviceList, ctime) = data[0]
 
     inputTask = np.array(json.loads(inputTask))
     inputTypeList = np.array(json.loads(inputTypeList))

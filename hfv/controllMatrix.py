@@ -15,8 +15,10 @@ import time
 # ~~~~~~~~~~~~~~~~~~~inputDB操作函数~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # 更新任务执行控制表
 def updateDeviceTask(data, dstIP, ctime):
-    sql = "select * from decidedestination"
+    sql = "select * from decidedestination where dst='%s'" % dstIP
     (status, output) = sendToDB(sql)
+    print(output)
+    print('***********',output)
     if status == -1:
         return (status, output)
     if output == []:
@@ -34,10 +36,12 @@ def getDeviceTask():
     (status, output) = sendToDB(sql)
     if status == -1:
         return (status, output)
-    return (status, output[0])
+    # print(output)
+    return (status, output)
 
 
 # ~~~~~~~~~~~~~~~~~~~dataCach操作函数~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 # 更新设备输入数据信息
 def updateDataCach(device, decideValue):
     # 检查是否存在该设备在预接收的列表中，如果不存在则丢弃
@@ -71,9 +75,51 @@ def getDataFromDataCach(device):
     sql = "select data from datacach where deviceid='%s'" % device
     return sendToDB(sql)
 
+# 判断是否存在相应的设备数据缓存信息
+def existDevice(device):
+    (status, output) = getDataFromDataCach(device)
+    print(device, output)
+    if status == -1:
+        retrun (status, output)
+    if output == []:
+        return (1, False)
+    else:
+        return (1, True) 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # 以下都是对output的数据库，即存储任务矩阵的数据库的操作
+# 获取设备列表
+def getDeviceListFromDB():
+    sql = "select devicelist from resulovetable"
+    (status, output) = sendToDB(sql)
+    if status == -1:
+        return (status, output)
+    if output == []:
+        return (-1, 'no deviceList')
+    return (status, output[0][0])
+
+
+# 获取任务执行状态
+def getTaskStatus():
+    sql = "select status from resulovetable"
+    (status, output) = sendToDB(sql)
+    print(output)
+    if status == -1:
+        return (status, output)
+    if output == []:
+        return (-1, 'no deviceList')
+    return (status, output[0][0])
+
+
+# 更新任务执行状态
+def updateTaskStatus(taskStatus):
+    (status, output) = getTaskStatus()
+    if status == -1:
+        return (status, output)
+    sql = 'update resulovetable set status=%d' % taskStatus
+    return sendToDB(sql)
+
+
 # 插入任务到数据库
 def insertDB(taskMatrix, inputTypeList, deviceList, status, ctime):
     sql = "insert into resulovetable \
@@ -107,7 +153,7 @@ def getTaskFromDB():
     # 查询最新一条可用任务
     sql = 'select * from resulovetable order by id desc limit 0,1'
     (status, output) = sendToDB(sql)
-    return output[0]
+    return output
 
 def getTaskFromDBByID(id):
     # 从数据库中获取数据
@@ -117,7 +163,7 @@ def getTaskFromDBByID(id):
 
 def getValueByNodeID(nodeid):
     # 获取devicelist
-    (id, inputTask, inputTypeList, status, deviceList, ctime) = getTaskFromDB()
+    (id, inputTask, inputTypeList, status, deviceList, ctime) = getTaskFromDB()[0]
     device = json.loads(deviceList)[nodeid]
     if device == -1:
         return (-1, "not a device")
@@ -132,7 +178,7 @@ def getValueByNodeID(nodeid):
 
 # 获取循环时间
 def getCircleTime():
-    data = getTaskFromDB()
+    data = getTaskFromDB()[0]
     if data == ():
         return 5
     return data[5]
@@ -180,7 +226,7 @@ if __name__ == '__main__':
     for i in range(len(data[0])):
         insertDataIntoDataCach(data[0][i])
         updateDataCach(data[0][i], data[1][i])
-    showDB()
-    (id, inputTask, inputTypeList, status, deviceList, ctime) = getTaskFromDB()
+    #showDB()
+    (id, inputTask, inputTypeList, status, deviceList, ctime) = getTaskFromDB()[0]
     #print(inputTask)
     print(getValueByNodeID(6))
