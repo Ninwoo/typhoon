@@ -1,6 +1,7 @@
 from controllMatrix import *
 from resolveMatrix import runTask
 import os
+import socket
 
 # 发送控制指令到传感器设备，参数cmd，控制命令
 def sendCommandToDevice(cmd):

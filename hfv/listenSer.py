@@ -29,7 +29,7 @@ from controllMatrix import *
 
 # 两种控制模式，controller:控制器写入控制命令，device：接收其他传感器控制命令
 controlModeList = ['controller', 'device']
-controlMethodList = ['addInput','addOutput', 'rm', 'clear', 'period', 'show', 'start', 'stop']
+controlMethodList = ['addInput','addOutput', 'addCach', 'rm', 'clear', 'period', 'show', 'start', 'stop']
 
 class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
     '''
@@ -156,6 +156,7 @@ def executeCommand(command, information):
              circleTime) = information
         return insertDB(taskMatrixJOSN, deviceTypeListJOSN, deviceListJOSN,\
                             int(taskStatus), int(circleTime))
+        
     elif command == 'addCach':
         data = information[0]
         data = json.loads(data)
@@ -163,7 +164,6 @@ def executeCommand(command, information):
             (status, output) = insertDataIntoDataCach(data[0][i])
             (status, output) = updateDataCach(data[0][i], data[1][i])
         return (status, output)
-        
     elif command == 'show':
         DBName = information[0]
         return showDatabase(DBName)

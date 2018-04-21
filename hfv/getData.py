@@ -65,5 +65,5 @@ while True:
             print('0')
             msg = 'device&%s&0' % os.getenv('HOSTNAME')
         
-        (status, recvdata) = sendBySocket(ip, int(port), method)
+        (status, recvdata) = sendBySocket(ip, int(port), msg)
     time.sleep(ctime)
