@@ -29,7 +29,7 @@ from controllMatrix import *
 
 # 两种控制模式，controller:控制器写入控制命令，device：接收其他传感器控制命令
 controlModeList = ['controller', 'device']
-controlMethodList = ['addInput','addOutput', 'addCach', 'rm', 'clear', 'period', 'show', 'start', 'stop']
+controlMethodList = ['addInput','addOutput', 'addCach', 'rm', 'clear', 'period', 'show', 'start', 'stop', 'run']
 
 class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
     '''
@@ -173,6 +173,9 @@ def executeCommand(command, information):
         return updateTaskStatus(1)
     elif command == 'stop':
         return updateTaskStatus(0)
+    elif command == 'run':
+        method = information[0]
+        return sendCommandToDevice(method)
 
 
 # 创建数据库
