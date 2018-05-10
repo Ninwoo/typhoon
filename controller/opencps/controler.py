@@ -8,7 +8,15 @@ def execute(port, message):
     s.connect(("192.168.12.19", port))
     s.sendall(message.encode())
     response = s.recv(1024).decode()
-    print(response)
+    return json.loads(response)
+
+def Print(data):
+    print(format(data, "<20"), end='')
+
+def PrintTitle(title):
+    for t in title:
+        Print(t)
+    print('')
 
 
 
