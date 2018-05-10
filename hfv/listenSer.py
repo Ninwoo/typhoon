@@ -88,7 +88,7 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
             errorFlag = True
 
         # 返回控制命令执行结果
-        jresp = json.dumps((status, str(output)))
+        jresp = json.dumps((status, json.dumps(output)))
         try:
             self.request.sendall(jresp.encode())
         except socket.error as err_msg:
